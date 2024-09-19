@@ -13,7 +13,7 @@ After training, navigate to the Inference directory to:
 3. Create interaction networks based on the learned latent variables
 Make sure to choose the appropriate path variables for inference based on the dataset used for training.
 
-##Installation
+## Installation
 This code is supported with Python 3.6.7 Run the following command to install the required dependencies:
 
 '''bash
