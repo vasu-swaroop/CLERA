@@ -1,0 +1,2 @@
+model_checkpoint_path: "c:\\Users\\Vasu\\Desktop\\Model Discovery Code\\Method\\Examples\\SERGIO/SERGIO[64, 32][10, 5, 0.1, 1, 1e-05, 6, 0.1, [12]]0.001\\2024_09_19_00459245"
+all_model_checkpoint_paths: "c:\\Users\\Vasu\\Desktop\\Model Discovery Code\\Method\\Examples\\SERGIO/SERGIO[64, 32][10, 5, 0.1, 1, 1e-05, 6, 0.1, [12]]0.001\\2024_09_19_00459245"
