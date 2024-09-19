@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt 
 import numpy as np
 from sklearn.metrics import confusion_matrix, classification_report, accuracy_score
+
 def softmax(x):
     exp_scores = np.exp(x)
     softmax_probs = exp_scores / np.sum(exp_scores, axis=0)
