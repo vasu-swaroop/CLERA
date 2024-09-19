@@ -15,10 +15,8 @@ Make sure to choose the appropriate path variables for inference based on the da
 
 ## Installation
 This code is supported with Python 3.6.7 Run the following command to install the required dependencies:
-
-'''bash
 pip install -r requirements.txt
-'''
+
 
 ## Structure
 
@@ -35,4 +33,3 @@ pip install -r requirements.txt
         ├── Choose Best Experiment
         ├── Find SHAP values
         └── Create Interaction Network
-'''
