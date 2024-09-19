@@ -17,6 +17,7 @@ CLERA is a novel end-to-end computational framework designed to uncover parsimon
         ├── Choose Best Experiment
         ├── Find SHAP values
         └── Create Interaction Network
+'''
 ## Usage
 ### Training
 Navigate to the appropriate example dataset directory (e.g., Pancreas or Bone_Marrow) under Examples to start the training. Each directory contains the notebook which loads the dataset, preprocesses it and start training. Modify the params dictionary for more control over the training trajectory
@@ -33,4 +34,5 @@ This code is supported with Python 3.6.7 Run the following command to install th
 
 '''bash
 pip install -r requirements.txt
-
+'''
+''
