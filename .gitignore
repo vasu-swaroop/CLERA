@@ -1,1 +1,5 @@
-*h5ad
+*.h5ad
+*.index
+*params.pkl
+*.meta
+*.png
