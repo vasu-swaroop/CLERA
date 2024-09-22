@@ -8,6 +8,58 @@ Navigate to the appropriate example dataset directory (e.g., Pancreas or Bone_Ma
 
 Every experiment is repeated by 'num_instance' number. The experiment outputs are stored in the relevant directory
 
+## Training Parameters
+
+#### Model Settings
+- `latent_dim`              # Dimensionality of the latent space
+- `input_dim`               # Input dimension (number of genes)
+- `model_order`             # Order of the model (Currently only model_order=1 is supported)
+
+
+#### SINDy Library (Boolean variables)
+- `include_exp`             # Include exponential terms
+- `include_reciprocal_func` # Include reciprocal functions
+- `include_constant`        # Include constant term in SINDy library
+- `poly_order`              # Polynomial order for SINDy
+
+#### Sequential Thresholding Parameters
+- `sequential_thresholding` # Enable sequential thresholding
+- `coefficient_threshold`   # Threshold for coefficients
+- `threshold_frequency`     # Frequency of threshold updates
+- `coefficient_mask`        # The terms in the SINDy library to mask out in the beginning
+
+#### Loss Function Weighting
+- `loss_weight_decoder`         # Weight for the decoder loss (reconstruction error)
+- `loss_weight_sindy_z`         # Weight for SINDy term z
+- `loss_weight_sindy_x`         # Weight for SINDy term x
+- `loss_weight_sindy_regularization` # Regularization weight for SINDy terms
+- `autoencoder_regularization`  # Regularization weight for autoencoder
+
+#### Neural Network Architecture
+- `activation`            # Activation function (e.g., 'relu', 'sigmoid')
+- `widths`                # List of layer widths for encoder and decoder
+
+#### Training Parameters
+- `learning_rate`         # Learning rate for optimization
+- `batch_size`            # Size of each training batch (same as dataset size in this case)
+- `max_epochs`            # Maximum number of training epochs
+- `refinement_epochs`     # Number of additional refinement epochs
+- `terms`                 # Early stopping criteria based on number of active terms
+
+#### Classification Parameters
+- `classify`              # Enable classification network
+- `classifier_widths`     # List of layer widths for classifier network
+- `num_classes`           # Number of classes for classification
+- `loss_class`            # Weight for classification loss
+
+#### Coefficient Initialization
+- `coefficient_initialization`  # Method for initializing SINDy coefficients (example 'specified', 'normal'). In case 'specified' is used, 'init_cefficient' takes the innitialization values
+- `init_coefficients`           # Random initialization of coefficients in the SINDy library
+
+#### Saving Results
+- `save_folder`           # Directory where experiment results are saved
+
+
 ### Inference
 After training, navigate to the Inference directory to:
 1. Select the best experiment
