@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-def window_average_with_stride(df, window_size, stride, allowed_clusters, num_genes=2000):
+def window_average_with_stride_SCVELO(df, window_size, stride, allowed_clusters, num_genes=2000):
     results = []
     # Assuming the last column is categorical and the rest are numeric
     numeric_indices = list(range(num_genes))  # Adjust if your indices start from 1 or another number
@@ -24,14 +24,18 @@ def window_average_with_stride(df, window_size, stride, allowed_clusters, num_ge
         results.append(aggregated_row)
     result_df = pd.DataFrame(results)
     return result_df
-def split_data(data_dict, validation_ratio=0.2, seed=None):
+def window_average_with_stride_SERGIO(df, window_size, stride):
+    result = pd.concat([df.iloc[i:i+window_size].agg(lambda x: x.mean() if pd.api.types.is_numeric_dtype(x) else x.mode().iloc[0])
+                       for i in range(0, len(df), stride)], axis=1).T.reset_index(drop=True)
+
+    return result[df.columns]
+def split_data(data_dict, validation_ratio=0.2):
     """
     Splits the data dictionary into training and validation sets.
 
     Parameters:
         data_dict (dict): The data dictionary with 'x' and 'dx' arrays.
         validation_ratio (float): The ratio of validation data (default: 0.2).
-        seed (int): Seed for random number generator (optional).
 
     Returns:
         tuple: Two dictionaries: (training_dict, validation_dict).
