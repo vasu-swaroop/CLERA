@@ -3,3 +3,5 @@
 *params.pkl
 *.meta
 *.png
+src/__pycache__
+**/*.pdf
