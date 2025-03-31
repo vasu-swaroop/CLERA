@@ -75,15 +75,24 @@ pip install -r requirements.txt
 ## Structure
 
 ```bash
-.
 ├── src
-│   ├── Training scripts
-│   ├── Utility Files
+│   ├── Training scripts            # Scripts for model training
+│   ├── Utility Files               # Helper functions and utilities
 ├── Examples
 │   ├── Pancreas
+│   │   ├── Experiment Name
+│   │   │       ├── result_hyperparam   # Loss curves, results and checkpoint for each run
+│   │   │       ├── chosen_exp_components     # Saved components from the chosen experiment
+│   │   │       └── experiment_runs.pickle    # Pickle file with experiment data
 │   ├── Bone_Marrow
 │   ├── SERGIO
-|   ├── Inference
-        ├── Choose Best Experiment
-        ├── Find SHAP values
-        └── Create Interaction Network
+├── Inference
+│   ├── Choose Best Experiment       # Select best-performing model
+│   ├── Find SHAP values             # Compute SHAP values for interpretability
+│   └── Create Interaction Network   # Build gene interaction network
+
+## TODO
+- [] Add results for Bone Marrows and SERGIO
+- [] Add network and centrality analysis
+- [] Better interface for best experiment selection
+- [] Make code plots user friendly 
