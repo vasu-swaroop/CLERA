@@ -1,6 +1,3 @@
 *.h5ad
 *.index
-*params.pkl
-*.meta
-*.png
 src/__pycache__
