@@ -96,3 +96,15 @@ pip install -r requirements.txt
 - [] Add network and centrality analysis
 - [] Better interface for best experiment selection
 - [] Make code plots user friendly 
+.
+├── src
+│   ├── Training scripts
+│   ├── Utility Files
+├── Examples
+│   ├── Pancreas
+│   ├── Bone_Marrow
+│   ├── SERGIO
+|   ├── Inference
+        ├── Choose Best Experiment
+        ├── Find SHAP values
+        └── Create Interaction Network
