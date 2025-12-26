@@ -46,7 +46,7 @@ def apply_sindy_ae_loss(
     x = inp_data['x']
     dx = inp_data['dx']
     
-    x_recon = out_dict['x']
+    x_recon = out_dict['x_recon']
     z = out_dict['z']
     enc_grads = out_dict['enc_grads']
     dec_grads = out_dict['dec_grads']
@@ -54,10 +54,12 @@ def apply_sindy_ae_loss(
     
     loss_recon = get_recon_loss(x, x_recon)
     
-    dz_true = torch.bmm(enc_grads, dx.unsqueeze(-1)).squeeze(-1)
+    # enc_grads: (B, latent_dim, D), dx: (B, D) -> dz_true: (B, latent_dim)
+    dz_true = torch.einsum('bld,bd->bl', enc_grads, dx)
     loss_sindy_z = get_sindy_z_loss(dz_true, sindy_predict)
     
-    dx_sindy_pred = torch.bmm(dec_grads, sindy_predict.unsqueeze(-1)).squeeze(-1)
+    # dec_grads: (B, D, latent_dim), sindy_predict: (B, latent_dim) -> dx_sindy_pred: (B, D)
+    dx_sindy_pred = torch.einsum('bdl,bl->bd', dec_grads, sindy_predict)
     loss_sindy_x = get_sindy_x_loss(dx, dx_sindy_pred)
     
     loss_class = torch.tensor(0.0, device=x.device)
@@ -97,17 +99,19 @@ def compute_loss_components(
 ) -> Dict[str, float]:
     x = inp_data['x']
     dx = inp_data['dx']
-    x_recon = out_dict['x']
+    x_recon = out_dict['x_recon']
     enc_grads = out_dict['enc_grads']
     dec_grads = out_dict['dec_grads']
     sindy_predict = out_dict['sindy_predict']
     
     loss_recon = get_recon_loss(x, x_recon)
     
-    dz_true = torch.bmm(enc_grads, dx.unsqueeze(-1)).squeeze(-1)
+    # enc_grads: (B, latent_dim, D), dx: (B, D) -> dz_true: (B, latent_dim)
+    dz_true = torch.einsum('bld,bd->bl', enc_grads, dx)
     loss_sindy_z = get_sindy_z_loss(dz_true, sindy_predict)
     
-    dx_sindy_pred = torch.bmm(dec_grads, sindy_predict.unsqueeze(-1)).squeeze(-1)
+    # dec_grads: (B, D, latent_dim), sindy_predict: (B, latent_dim) -> dx_sindy_pred: (B, D)
+    dx_sindy_pred = torch.einsum('bdl,bl->bd', dec_grads, sindy_predict)
     loss_sindy_x = get_sindy_x_loss(dx, dx_sindy_pred)
     
     loss_class = torch.tensor(0.0, device=x.device)
@@ -148,17 +152,19 @@ def compute_refinement_loss(
     x = inp_data['x']
     dx = inp_data['dx']
     
-    x_recon = out_dict['x']
+    x_recon = out_dict['x_recon']
     enc_grads = out_dict['enc_grads']
     dec_grads = out_dict['dec_grads']
     sindy_predict = out_dict['sindy_predict']
     
     loss_recon = get_recon_loss(x, x_recon)
     
-    dz_true = torch.bmm(enc_grads, dx.unsqueeze(-1)).squeeze(-1)
+    # enc_grads: (B, latent_dim, D), dx: (B, D) -> dz_true: (B, latent_dim)
+    dz_true = torch.einsum('bld,bd->bl', enc_grads, dx)
     loss_sindy_z = get_sindy_z_loss(dz_true, sindy_predict)
     
-    dx_sindy_pred = torch.bmm(dec_grads, sindy_predict.unsqueeze(-1)).squeeze(-1)
+    # dec_grads: (B, D, latent_dim), sindy_predict: (B, latent_dim) -> dx_sindy_pred: (B, D)
+    dx_sindy_pred = torch.einsum('bdl,bl->bd', dec_grads, sindy_predict)
     loss_sindy_x = get_sindy_x_loss(dx, dx_sindy_pred)
     
     loss_class = torch.tensor(0.0, device=x.device)

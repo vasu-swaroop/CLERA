@@ -7,9 +7,9 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from core.loss_tracker import LossTracker
-from .autoencoder import SINDyAEConfig, SINDyAE
-from .losses import apply_sindy_ae_loss, compute_refinement_loss, compute_loss_components
-from .utils import save_checkpoint, load_checkpoint, apply_coefficient_thresholding
+from src.torch_impl.autoencoder import SINDyAEConfig, SINDyAE
+from src.torch_impl.losses import apply_sindy_ae_loss, compute_refinement_loss, compute_loss_components
+from src.torch_impl.utils import save_checkpoint, load_checkpoint, apply_coefficient_thresholding
 
 @dataclass
 class LossWeights:
@@ -140,3 +140,112 @@ def train_network(
         )
     
     return model, loss_tracker
+
+def generate_dummy_data(data_dim, class_size, batch_size):
+    """Generate dummy data for testing"""
+    x = torch.randn(batch_size, data_dim)
+    dx = torch.randn(batch_size, data_dim)
+    class_batch = torch.randint(0, class_size, (batch_size,))
+    class_labels = torch.nn.functional.one_hot(class_batch, num_classes=class_size).float()
+
+    return {'x': x, 'dx': dx, 'class_labels': class_labels}
+
+def create_dummy_training_config(data_dim=1000, latent_dim=6, num_classes=10):
+    """Create a dummy training configuration for testing"""
+    from .autoencoder import dummy_autoencoder
+    
+    # Create SINDy autoencoder config
+    sindy_ae_config = dummy_autoencoder(input_dim=data_dim, latent_dim=latent_dim, num_classes=num_classes)
+    
+    # Create loss weights
+    loss_weights = LossWeights(
+        recon_wt=1.0,
+        sindy_wt_x=1e-4,
+        sindy_wt_z=1e-4,
+        class_wt=1.0,
+        l1_reg=1e-5
+    )
+    
+    # Create training settings
+    train_settings = TrainSettings(
+        optimizer='adam',
+        lr=1e-3,
+        refinement_epochs=5,
+        num_epochs=10,
+        batch_size=20,
+        threshold_frequency=5,
+        coefficient_threshold=0.1,
+        sequential_thresholding=True
+    )
+    
+    # Create full training config
+    training_config = TrainingConfig(
+        sindy_ae_config=sindy_ae_config,
+        loss_weights=loss_weights,
+        train_settings=train_settings,
+        print_progress=True,
+        print_frequency=2,
+        plot_loss=False,
+        load_model_path=None,
+        save_model_path=None
+    )
+    
+    return training_config
+
+
+def test_training():
+    """Test the training pipeline with dummy data"""
+    print("Testing training.py...")
+    
+    # Configuration
+    data_dim = 100
+    class_size = 5
+    batch_size = 10
+    latent_dim = 6
+    
+    # Create training config
+    training_config = create_dummy_training_config(data_dim, latent_dim, class_size)
+    
+    # Create model
+    sindy_ae = SINDyAE(training_config.sindy_ae_config)
+    print("✓ Model created successfully")
+    
+    # Generate dummy input
+    inp = generate_dummy_data(data_dim, class_size, batch_size)
+    print("✓ Dummy data generated")
+    
+    # Test forward pass
+    with torch.no_grad():
+        model_out = sindy_ae(inp['x'])
+        print("✓ Forward pass successful")
+        print(f"  Output keys: {list(model_out.keys())}")
+    
+    # Test loss computation
+    loss_weights = training_config.loss_weights
+    
+    # Test apply_sindy_ae_loss
+    loss_train = apply_sindy_ae_loss(sindy_ae, loss_weights, model_out, inp)
+    print(f"✓ Training loss computed: {loss_train.item():.4f}")
+    
+    # Test compute_refinement_loss
+    loss_refine = compute_refinement_loss(sindy_ae, loss_weights, model_out, inp)
+    print(f"✓ Refinement loss computed: {loss_refine.item():.4f}")
+    
+    # Test compute_loss_components
+    loss_components = compute_loss_components(sindy_ae, model_out, inp, loss_weights)
+    print("✓ Loss components computed:")
+    for key, val in loss_components.items():
+        print(f"  {key}: {val:.6f}")
+    
+    # Test backward pass
+    optimizer = torch.optim.Adam(sindy_ae.parameters(), lr=1e-3)
+    optimizer.zero_grad()
+    loss_train.backward()
+    optimizer.step()
+    print("✓ Backward pass and optimizer step successful")
+    
+    print("\n✅ All training tests passed!")
+
+
+if __name__ == '__main__':
+    test_training()

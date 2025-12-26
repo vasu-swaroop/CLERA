@@ -1,4 +1,4 @@
-from torch.autograd.functional import jvp
+from torch.autograd.functional import jacobian
 import torch
 from torch import nn
 from enum import Enum
@@ -6,6 +6,7 @@ import math
 from dataclasses import dataclass
 from jaxtyping import Float, Array
 from einops import einsum
+from torch.func import jacrev, vmap
 
 class Activation(Enum):
     RELU = 'relu'
@@ -215,18 +216,23 @@ class SINDyAE(nn.Module):
         self.sindy=SINDy(sindy_ae_config.sindy_config)
 
     def forward(self, x:Float[Array, 'B D']):
-        # Create tangent vectors for jvp (ones with same shape as input)
-        v_x = torch.ones_like(x)
+        # Compute encoder output
+        z = self.encoder(x)  # B latent_dim
         
-        z, enc_grads = jvp(self.encoder, (x,), (v_x,))
+        enc_grads_func = vmap(jacrev(self.encoder))
         
-        # Create tangent vector for decoder jvp
-        v_z = torch.ones_like(z)
+        enc_grads= enc_grads_func(x)
+        # Compute decoder output (reconstruction)
+        x_recon = self.decoder(z)  # B D
         
-        x_recon, dec_grads = jvp(self.decoder, (z,), (v_z,))
+        dec_grads_func=vmap(jacrev(self.decoder))
 
+        dec_grads = dec_grads_func(z)
+
+        # Compute classification scores
         class_score = self.classification_head(z) # B c
         
+        # Compute SINDy feature matrix and predictions
         feature_matrix = self.sindy(z) # B F
         sindy_predict = einsum(feature_matrix, self.sindy.coefficients, 'B F, F d -> B d')
         
@@ -241,13 +247,7 @@ class SINDyAE(nn.Module):
         }
         return out_dict
 
-
-def dummy_model_training():
-    batch_size=10
-    input_dim=1024
-    latent_dim=8
-    num_classes=6
-
+def dummy_autoencoder(input_dim=1024, latent_dim=8, num_classes=6):
     ae_weights=[512,128,32]
     classifier_weights=[8,8]
     activation=Activation.RELU
@@ -267,14 +267,23 @@ def dummy_model_training():
     
     sindy_ae_config= SINDyAEConfig(encoder_config=encoder_config, decoder_config=decoder_config, class_config=class_config, sindy_config=sindy_config)
 
-    sindy_ae=SINDyAE(sindy_ae_config)
+    return sindy_ae_config
 
-    x=torch.ones((batch_size, input_dim))
+def dummy_model_training():
+    batch_size = 10
+    input_dim = 1024
+    latent_dim = 8
+    num_classes = 6
+    
+    dummy_config = dummy_autoencoder(input_dim=input_dim, latent_dim=latent_dim, num_classes=num_classes)
+    sindy_ae = SINDyAE(dummy_config)
+
+    x = torch.ones((batch_size, input_dim))
     with torch.no_grad():
-        out=sindy_ae(x)
+        out = sindy_ae(x)
         for key, val in out.items():
             print(f"{key}: {val.shape}")
 
     
-if __name__=='__main__':
+if __name__ == '__main__':
     dummy_model_training()
