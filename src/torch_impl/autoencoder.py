@@ -4,7 +4,6 @@ from torch import nn
 from enum import Enum
 import math
 from dataclasses import dataclass
-from jaxtyping import Float, Array
 from einops import einsum
 from torch.func import jacrev, vmap
 
@@ -170,7 +169,7 @@ class SINDy(nn.Module):
                 term = term * z[:, idx]
             features.append(term)
     
-    def get_feature_matrix(self, z: Float[Array, 'B d']) -> Float[Array, 'B F']:
+    def get_feature_matrix(self, z: torch.Tensor) -> torch.Tensor:
         """
         Construct the SINDy feature library matrix.
         
@@ -215,7 +214,7 @@ class SINDyAE(nn.Module):
         self.classification_head=MLP(sindy_ae_config.class_config)
         self.sindy=SINDy(sindy_ae_config.sindy_config)
 
-    def forward(self, x:Float[Array, 'B D']):
+    def forward(self, x: torch.Tensor):
         # Compute encoder output
         z = self.encoder(x)  # B latent_dim
         

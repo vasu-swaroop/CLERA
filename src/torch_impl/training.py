@@ -1,15 +1,33 @@
 from dataclasses import dataclass
-from typing import Dict, List, Optional
-import numpy as np
+from torch.utils.data import DataLoader, Dataset
 import torch
-from torch.optim import Adam
-from torch.utils.data import DataLoader
+import numpy as np
+from typing import Dict, Optional
 from tqdm import tqdm
+from torch.optim import Adam
+import torch.nn as nn
 
-from core.loss_tracker import LossTracker
 from src.torch_impl.autoencoder import SINDyAEConfig, SINDyAE
 from src.torch_impl.losses import apply_sindy_ae_loss, compute_refinement_loss, compute_loss_components
 from src.torch_impl.utils import save_checkpoint, load_checkpoint, apply_coefficient_thresholding
+from src.core.loss_tracker import LossTracker
+
+class SINDyDataset(Dataset):
+    def __init__(self, data_dict: Dict[str, np.ndarray]):
+        self.x = torch.from_numpy(data_dict['x']).float()
+        self.dx = torch.from_numpy(data_dict['dx']).float()
+        self.classes = torch.from_numpy(data_dict['classes']).long()
+        self.n_samples = self.x.shape[0]
+
+    def __len__(self):
+        return self.n_samples
+
+    def __getitem__(self, idx):
+        return {
+            'x': self.x[idx],
+            'dx': self.dx[idx],
+            'classes': self.classes[idx]
+        }
 
 @dataclass
 class LossWeights:
@@ -57,8 +75,11 @@ def train_network(
     if training_config.load_model_path is not None:
         epoch_start = load_checkpoint(model, optimizer, training_config.load_model_path)
     
-    train_dataloader = DataLoader(training_data, batch_size=train_settings.batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_data, batch_size=train_settings.batch_size, shuffle=False)
+    train_dataset = SINDyDataset(training_data)
+    val_dataset = SINDyDataset(val_data)
+    
+    train_dataloader = DataLoader(train_dataset, batch_size=train_settings.batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_dataset, batch_size=train_settings.batch_size, shuffle=False)
     
     # Training Phase
     print("=" * 50)
