@@ -18,15 +18,16 @@ sindy_config:
 
 loss_weights:
   recon_wt: 1.0
-  sindy_wt_z: 0.01
-  sindy_wt_x: 0.1
-  class_wt: 0.05
-  l1_reg: 0.00001
+  sindy_wt_z: 1e-2
+  sindy_wt_x: 1e-1
+  class_wt: 5e-2
+  l1_reg: 1e-5
+  sindy_reg_wt: 8e-3
 
 train_settings:
   optimizer: "adam"
   lr: 0.001
-  num_epochs: 1000
+  num_epochs: 10000
   refinement_epochs: 500
   batch_size: 256
   threshold_frequency: 150

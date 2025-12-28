@@ -112,6 +112,7 @@ def train_network(
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
                 loss_tracker.update_losses(val_losses, 'val')
+                loss_tracker.print_losses(epoch, 'training')
 
         #Apply Sequential thresholding               
         if train_settings.sequential_thresholding and (epoch % train_settings.threshold_frequency == 0) and (epoch > 0):
@@ -161,10 +162,16 @@ def train_network(
                        training_config.save_model_path)
     
     if training_config.plot_loss:
+        # Strip .pt extension if present for cleaner plot filenames
+        save_name = training_config.save_model_path or "model"
+        if save_name.endswith('.pt'):
+            save_name = save_name[:-3]
+        
         loss_tracker.plot_all_losses(
-            save_name=training_config.save_model_path or "model",
+            save_name=save_name,
             print_frequency=training_config.print_frequency
         )
+        print(f"\nPlots saved to: {save_name}_training_errors.png and {save_name}_refinement_errors.png")
     
     return model, loss_tracker
 

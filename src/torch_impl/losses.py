@@ -24,11 +24,11 @@ def get_sindy_x_loss(dx_true: torch.Tensor, dx_sindy_pred: torch.Tensor) -> torc
 
 
 def get_class_loss(class_logits: torch.Tensor, class_labels: torch.Tensor) -> torch.Tensor:
-    """Multiclass cross-entropy loss. Handles both index labels and one-hot encoded labels."""
-    if class_labels.dim() > 1:
-        # One-hot encoded -> convert to class indices
-        class_labels = class_labels.argmax(dim=1)
-    return F.cross_entropy(class_logits, class_labels)
+    """Sigmoid cross-entropy loss (multi-label) to match TF implementation."""
+    # Ensure class_labels is float for BCE
+    if class_labels.dtype != torch.float32:
+        class_labels = class_labels.float()
+    return F.binary_cross_entropy_with_logits(class_logits, class_labels)
 
 
 def get_recon_loss(x: torch.Tensor, x_recon: torch.Tensor) -> torch.Tensor:
@@ -40,7 +40,7 @@ def l1_regularization(params: List[torch.nn.Parameter]) -> torch.Tensor:
 
 
 def sindy_regularization(coefficients: torch.Tensor, mask: torch.Tensor) -> torch.Tensor:
-    return torch.sum(torch.abs(coefficients * mask))
+    return torch.mean(torch.abs(coefficients * mask))
 
 
 def compute_losses(

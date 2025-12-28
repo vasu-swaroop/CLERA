@@ -17,21 +17,22 @@ sindy_config:
   innitialization_set: [-1, 1]
 
 loss_weights:
-  recon_wt: 10.0
-  sindy_wt_z: 5.0
-  sindy_wt_x: 0.1
-  class_wt: 1.0
-  l1_reg: 1.0
+  recon_wt: 1.0
+  sindy_wt_z: 1e-2
+  sindy_wt_x: 1e-1
+  class_wt: 5e-2
+  l1_reg: 1e-5
   sindy_reg_wt: 8e-3
 
 train_settings:
   optimizer: "adam"
   lr: 0.001
-  num_epochs: 1000
+  num_epochs: 10000
   refinement_epochs: 500
   batch_size: 1024
-  threshold_frequency: 200
+  threshold_frequency: 150
   coefficient_threshold: 0.1
+  max_active_terms: 37
   sequential_thresholding: true
 
 training_config:
