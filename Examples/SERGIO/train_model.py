@@ -50,8 +50,7 @@ print(f"Training data shapes: x={training_data['x'].shape}, dx={training_data['d
 print(f"Validation data shapes: x={val_data['x'].shape}, dx={val_data['dx'].shape}, classes={val_data['classes'].shape}")
 
 # Training Configuration
-input_dim = training_data['x'].shape[1]
-training_config, experiment_path = build_training_config(config, script_dir, input_dim)
+training_config, experiment_path = build_training_config(config, script_dir)
 
 print(f"Experiment outputs will be saved to: {experiment_path}")
 

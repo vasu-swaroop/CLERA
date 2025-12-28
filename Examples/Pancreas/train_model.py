@@ -55,8 +55,7 @@ print("Training class counts:\n", pd.Series(training_data['classes'].flatten()).
 print("Validation class counts:\n", pd.Series(val_data['classes'].flatten()).value_counts())
 
 # Training Configuration
-input_dim = training_data['x'].shape[1]
-training_config, experiment_path = build_training_config(config, script_dir, input_dim)
+training_config, experiment_path = build_training_config(config, script_dir)
 
 print(f"Experiment outputs will be saved to: {experiment_path}")
 

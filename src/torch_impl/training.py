@@ -47,6 +47,7 @@ class TrainSettings:
     threshold_frequency: int
     coefficient_threshold: float
     sequential_thresholding: bool
+    max_active_terms: int = None
 
 @dataclass
 class TrainingConfig:
@@ -117,6 +118,10 @@ def train_network(
             num_terms = apply_coefficient_thresholding(model, train_settings.coefficient_threshold)
             loss_tracker.sindy_model_terms.append(num_terms)
             print(f"THRESHOLDING: {num_terms} active coefficients")
+        
+        if train_settings.max_active_terms is not None and num_terms < train_settings.max_active_terms:
+            print("Maximum active terms in RHS achieved, begining the refinement phase")
+            break
     
     # Refinement Phase
     print("\n" + "=" * 50)

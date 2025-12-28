@@ -1,8 +1,11 @@
 model_config:
+  input_dim: 2000
   latent_dim: 6
   num_classes: 7
-  ae_widths: [512, 32]
+  ae_widths: [512, 64]
   classifier_widths: [8]
+  activation: "relu"
+  initialization: "xavier"
 
 sindy_config:
   model_order: 1
@@ -10,13 +13,15 @@ sindy_config:
   include_sine: true
   include_exp: true
   include_reciprocal_func: true
+  initialization_type: "uniform_discrete"
+  initialization_set: [-1, 1]
 
 loss_weights:
-  recon_wt: 100.0
+  recon_wt: 1.0
   sindy_wt_z: 0.01
   sindy_wt_x: 0.1
-  class_wt: 1.0
-  l1_reg: 0.01
+  class_wt: 0.05
+  l1_reg: 0.00001
 
 train_settings:
   optimizer: "adam"
@@ -24,8 +29,9 @@ train_settings:
   num_epochs: 1000
   refinement_epochs: 500
   batch_size: 1024
-  threshold_frequency: 10
-  coefficient_threshold: 0.5
+  threshold_frequency: 150
+  coefficient_threshold: 0.1
+  max_active_terms: 37
   sequential_thresholding: true
 
 training_config:

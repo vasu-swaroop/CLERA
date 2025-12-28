@@ -7,23 +7,24 @@ from dataclasses import dataclass
 from einops import einsum
 from torch.func import jacrev, vmap
 
+class Initialization(Enum):
+    XAVIER = 'xavier'
+    KAIMING = 'kaiming'
+
+    def __call__(self, tensor):
+        if self == Initialization.XAVIER:
+            return nn.init.xavier_normal_(tensor)
+        elif self == Initialization.KAIMING:
+            return nn.init.kaiming_normal_(tensor)
+
 class Activation(Enum):
-    RELU = 'relu'
-    ELU = 'elu'
-    TANH = 'tanh'
-    IDENTITY = 'identity'
+    RELU = nn.ReLU
+    ELU = nn.ELU
+    TANH = nn.Tanh
+    IDENTITY = nn.Identity
     
-    def get_module(self):
-        if self == Activation.RELU:
-            return nn.ReLU()
-        elif self == Activation.ELU:
-            return nn.ELU()
-        elif self == Activation.TANH:
-            return nn.Tanh()
-        elif self == Activation.IDENTITY:
-            return nn.Identity()
-        else:
-            raise ValueError(f"Unknown activation: {self}")
+    def __call__(self):
+        return self.value()
 
 @dataclass
 class MLPConfig:
@@ -31,13 +32,7 @@ class MLPConfig:
     activation:Activation
     out_dim:int
     input_dim:int
-
-@dataclass
-class SINDyAEConfig:
-    encoder_config:MLPConfig
-    decoder_config:MLPConfig
-    class_config:MLPConfig
-    sindy_config:'SINDyConfig'
+    initialization: Initialization
 
 #IDEA: We can try to specifically limit some latent variables and force a functional term on them
 @dataclass
@@ -50,25 +45,39 @@ class SINDyConfig:
     include_log:bool|None = False
     include_exp:bool|None = False
     include_reciprocal_func:bool|None = False
-    
+    innitialization_type: str|None= None
+    innitialization_set: tuple|None= (1,)
     def __post_init__(self):
         assert self.model_order == 1, "only first order ODE supported as of now"
+
+@dataclass
+class SINDyAEConfig:
+    encoder_config:MLPConfig
+    decoder_config:MLPConfig
+    class_config:MLPConfig
+    sindy_config:SINDyConfig
 
 class MLP(nn.Module):
     def __init__(self, ae_config: MLPConfig):
         super().__init__()
         self.layers=[]
         weights = [ae_config.input_dim] + ae_config.weights
-
+        self.init_fn=ae_config.initialization
         #Hidden layers
         for i in range(len(weights) - 1):
             self.layers.append(nn.Linear(weights[i], weights[i+1]))
-            self.layers.append(ae_config.activation.get_module())
+            self.layers.append(ae_config.activation())
         
         #Out layer
         self.layers.append(nn.Linear(weights[-1], ae_config.out_dim))
 
         self.layers=nn.ModuleList(self.layers)
+
+        self.apply(self.init_func)
+
+    def init_func(self, x):
+        if isinstance(x, nn.Linear):
+            self.init_fn(x.weight)
 
     def forward(self, x):
         for layer in self.layers:
@@ -84,8 +93,41 @@ class SINDy(nn.Module):
 
         #IDEA: Can learn a LoRA
         self.coefficients=nn.Parameter(torch.ones(self.library_size, self.sindy_config.latent_dim))
-        self.coefficient_mask=nn.Parameter(torch.ones(self.library_size, self.sindy_config.latent_dim))
+
+        # Initialize the masks with one. When loading, register buffer can learn appropriately
+        self.register_buffer("coefficient_mask", torch.ones(self.library_size, self.sindy_config.latent_dim))
     
+    @torch.no_grad()
+    def init_sindy_coefficients(self):
+        """
+        Initialize SINDy coefficients by sampling from a fixed discrete value set.
+        """
+        init_type = self.sindy_config.innitialization_type
+        value_set = self.sindy_config.innitialization_set
+        
+        if init_type == 'uniform_discrete':
+            values = torch.tensor(
+                value_set,
+                device=self.coefficients.device,
+                dtype=self.coefficients.dtype
+            )
+            idx = torch.randint(
+                low=0,
+                high=len(values),
+                size=self.coefficients.shape,
+                device=self.coefficients.device
+            )
+            self.coefficients.copy_(values[idx])
+
+        elif init_type == 'uniform_continuous':
+            assert len(value_set) == 2, "Value set for uniform_continuous is min and max value"
+            min_val, max_val = value_set
+            nn.init.uniform_(self.coefficients, min_val, max_val)
+        elif init_type == 'xavier':
+            nn.init.xavier_normal_(self.coefficients)
+        elif init_type == 'kaiming':
+            nn.init.kaiming_normal_(self.coefficients)
+
     def count_library_size(self):
         config = self.sindy_config
         count = 0

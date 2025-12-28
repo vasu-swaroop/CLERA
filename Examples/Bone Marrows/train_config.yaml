@@ -1,8 +1,11 @@
 model_config:
+  input_dim: 2000
   latent_dim: 6
-  num_classes: 8
+  num_classes: 7
   ae_widths: [512, 32]
   classifier_widths: [8]
+  activation: "relu"
+  initialization: "xavier"
 
 sindy_config:
   model_order: 1
@@ -10,6 +13,8 @@ sindy_config:
   include_sine: true
   include_exp: true
   include_reciprocal_func: true
+  initialization_type: "uniform_discrete"
+  initialization_set: [-1, 1]
 
 loss_weights:
   recon_wt: 10.0

@@ -1,6 +1,6 @@
 import os
 import yaml
-from src.torch_impl.autoencoder import SINDyConfig, MLPConfig, SINDyAEConfig, Activation
+from src.torch_impl.autoencoder import SINDyConfig, MLPConfig, SINDyAEConfig, Activation, Initialization
 from src.torch_impl.training import LossWeights, TrainSettings, TrainingConfig
 
 def load_yaml_config(config_path):
@@ -10,35 +10,43 @@ def load_yaml_config(config_path):
     with open(config_path, 'r') as f:
         return yaml.safe_load(f)
 
-def build_training_config(config, script_dir, input_dim):
+def build_training_config(config, script_dir):
     """Convert raw configuration dict to TrainingConfig and setup directories."""
     
     # Model Configuration
     model_params = config['model_config']
+    input_dim = model_params['input_dim']
     latent_dim = model_params['latent_dim']
     num_classes = model_params['num_classes']
     ae_widths = model_params['ae_widths']
     classifier_widths = model_params['classifier_widths']
+    activation_str = model_params.get('activation', 'relu')
+    activation = Activation[activation_str.upper()]
+    initialization_str = model_params.get('initialization', 'xavier')
+    initialization = Initialization[initialization_str.upper()]
 
     encoder_config = MLPConfig(
         weights=ae_widths,
-        activation=Activation.RELU,
+        activation=activation,
         out_dim=latent_dim,
-        input_dim=input_dim
+        input_dim=input_dim,
+        initialization=initialization
     )
 
     decoder_config = MLPConfig(
         weights=ae_widths[::-1],
-        activation=Activation.RELU,
+        activation=activation,
         out_dim=input_dim,
-        input_dim=latent_dim
+        input_dim=latent_dim,
+        initialization=initialization
     )
 
     class_config = MLPConfig(
         weights=classifier_widths,
-        activation=Activation.RELU,
+        activation=activation,
         out_dim=num_classes,
-        input_dim=latent_dim
+        input_dim=latent_dim,
+        initialization=initialization
     )
 
     sindy_params = config['sindy_config']
@@ -78,7 +86,8 @@ def build_training_config(config, script_dir, input_dim):
         batch_size=train_params.get('batch_size', 1024),
         threshold_frequency=train_params.get('threshold_frequency', 10),
         coefficient_threshold=train_params.get('coefficient_threshold', 0.5),
-        sequential_thresholding=train_params.get('sequential_thresholding', True)
+        sequential_thresholding=train_params.get('sequential_thresholding', True),
+        max_active_terms=train_params.get('max_active_terms', None)
     )
 
     # General Training Config & Experiment Organization
