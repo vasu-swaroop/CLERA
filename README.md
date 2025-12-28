@@ -124,6 +124,24 @@ python Examples/SERGIO/train_model.py
 **3. Output location:**
 Results are saved to `Examples/<Dataset>/experiments/<experiment_name>/` as configured in the YAML file.
 
+### Transfer Learning
+
+CLERA supports transfer learning to reuse pretrained autoencoder and SINDy weights across datasets. This loads the encoder, decoder, and SINDy coefficients while keeping a **fresh coefficient mask** to allow new sparsity pattern discovery.
+
+**Configure in YAML:**
+```yaml
+training_config:
+  # ... other settings ...
+  transfer_learning_path: "../Pancreas/experiments/pancreas_test_01/model.pt"
+```
+
+**What gets loaded:**
+- ✅ Encoder weights
+- ✅ Decoder weights
+- ✅ SINDy coefficients
+- ❌ Coefficient mask (fresh for new sparsity discovery)
+- ❌ Classifier weights (re-initialized for new classes)
+
 
 ## Structure
 

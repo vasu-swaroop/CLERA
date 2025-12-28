@@ -9,14 +9,14 @@ import torch.nn as nn
 
 from src.torch_impl.autoencoder import SINDyAEConfig, SINDyAE
 from src.torch_impl.losses import apply_sindy_ae_loss, compute_refinement_loss, compute_loss_components, LossWeights
-from src.torch_impl.utils import save_checkpoint, load_checkpoint, apply_coefficient_thresholding
+from src.torch_impl.utils import save_checkpoint, load_checkpoint, apply_coefficient_thresholding, load_for_transfer_learning
 from src.core.loss_tracker import LossTracker
 
 class SINDyDataset(Dataset):
     def __init__(self, data_dict: Dict[str, np.ndarray]):
-        self.x = torch.from_numpy(data_dict['x']).float()
-        self.dx = torch.from_numpy(data_dict['dx']).float()
-        self.classes = torch.from_numpy(data_dict['classes']).long()
+        self.x = torch.from_numpy(data_dict['x'].astype(np.float32)).float()
+        self.dx = torch.from_numpy(data_dict['dx'].astype(np.float32)).float()
+        self.classes = torch.from_numpy(data_dict['classes'].astype(np.int64)).long()
         self.n_samples = self.x.shape[0]
 
     def __len__(self):
@@ -52,6 +52,7 @@ class TrainingConfig:
     plot_loss: bool
     load_model_path: Optional[str]
     save_model_path: Optional[str]
+    transfer_learning_path: Optional[str] = None  # Path to pretrained model for transfer learning
 
 
 def train_network(
@@ -68,6 +69,8 @@ def train_network(
     epoch_start = 0
     if training_config.load_model_path is not None:
         epoch_start = load_checkpoint(model, optimizer, training_config.load_model_path)
+    elif training_config.transfer_learning_path is not None:
+        load_for_transfer_learning(model, training_config.transfer_learning_path, load_classifier=False)
     
     train_dataset = SINDyDataset(training_data)
     val_dataset = SINDyDataset(val_data)
@@ -111,6 +114,15 @@ def train_network(
 
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
+                
+                # Get a training sample to track training loss as well
+                train_sample = next(iter(train_dataloader))
+                for key, val in train_sample.items():
+                    train_sample[key]=val.to(device)
+                train_out = model(train_sample['x'])
+                train_losses_comp = compute_loss_components(model, train_out, train_sample, training_config.loss_weights)
+                
+                loss_tracker.update_losses(train_losses_comp, 'train')
                 loss_tracker.update_losses(val_losses, 'val')
                 loss_tracker.print_losses(epoch, 'training')
 
@@ -153,6 +165,15 @@ def train_network(
 
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
+                
+                # Track training losses as well
+                train_sample = next(iter(train_dataloader))
+                for key, val in train_sample.items():
+                    train_sample[key]=val.to(device)
+                train_out = model(train_sample['x'])
+                train_losses_comp = compute_loss_components(model, train_out, train_sample, training_config.loss_weights)
+                
+                loss_tracker.update_refinement_losses(train_losses_comp, 'train')
                 loss_tracker.update_refinement_losses(val_losses, 'val')
                 
                 loss_tracker.print_losses(epoch, 'refinement')

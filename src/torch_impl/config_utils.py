@@ -103,6 +103,13 @@ def build_training_config(config, script_dir):
     os.makedirs(experiment_path, exist_ok=True)
     
     save_path = os.path.join(experiment_path, gen_params.get('save_model_path', 'model.pt'))
+    
+    # Handle transfer learning path
+    transfer_learning_path = gen_params.get('transfer_learning_path', None)
+    if transfer_learning_path is not None:
+        # Resolve relative path from script directory
+        if not os.path.isabs(transfer_learning_path):
+            transfer_learning_path = os.path.join(script_dir, transfer_learning_path)
 
     training_config = TrainingConfig(
         sindy_ae_config=sindy_ae_config,
@@ -112,7 +119,8 @@ def build_training_config(config, script_dir):
         print_frequency=gen_params.get('print_frequency', 50),
         plot_loss=gen_params.get('plot_loss', True),
         load_model_path=None,
-        save_model_path=save_path
+        save_model_path=save_path,
+        transfer_learning_path=transfer_learning_path
     )
 
     # Debug: print all loaded config values
@@ -161,6 +169,7 @@ def build_training_config(config, script_dir):
     print(f"  print_frequency: {training_config.print_frequency}")
     print(f"  plot_loss: {training_config.plot_loss}")
     print(f"  save_model_path: {training_config.save_model_path}")
+    print(f"  transfer_learning_path: {training_config.transfer_learning_path}")
     print(f"  experiment_path: {experiment_path}")
     print("="*60 + "\n")
 

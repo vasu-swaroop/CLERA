@@ -275,7 +275,7 @@ class SINDyAE(nn.Module):
         
         # Compute SINDy feature matrix and predictions
         feature_matrix = self.sindy(z) # B F
-        sindy_predict = einsum(feature_matrix, self.sindy.coefficients, 'B F, F d -> B d')
+        sindy_predict = einsum(feature_matrix, self.sindy.coefficients * self.sindy.coefficient_mask, 'B F, F d -> B d')
         
         out_dict = {
             'z': z,

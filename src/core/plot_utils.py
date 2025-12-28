@@ -111,50 +111,8 @@ def plot_curves(
     # time.sleep(1)
 
 
-def print_progress(
-    sess: tf.Session,
-    i: int,
-    loss: tf.Tensor,
-    losses: Dict[str, tf.Tensor],
-    train_dict: Dict[str, Any],
-    validation_dict: Dict[str, Any],
-    x_norm: float,
-    sindy_predict_norm: float,
-    z_norm: float,
-) -> Tuple[np.ndarray, np.ndarray, Tuple[float, float, float]]:
-    """
-    Print loss function values to keep track of the training progress.
-    """
-    training_loss_vals = sess.run(
-        (loss,) + tuple(losses.values()), feed_dict=train_dict
-    )
-    validation_loss_vals = sess.run(
-        (loss,) + tuple(losses.values()), feed_dict=validation_dict
-    )
-
-    print("Epoch %d" % i)
-    print("Training loss {0}, {1}".format(training_loss_vals[0], training_loss_vals[1:]))
-    print(
-        "Validation loss {0}, {1}".format(
-            validation_loss_vals[0], validation_loss_vals[1:]
-        )
-    )
-    decoder_losses = sess.run(
-        (losses["decoder"], losses["sindy_x"], losses["sindy_z"]),
-        feed_dict=validation_dict,
-    )
-
-    loss_ratios = (
-        decoder_losses[0] / x_norm,
-        decoder_losses[1] / sindy_predict_norm,
-        decoder_losses[2] / z_norm,
-    )
-    print(
-        "decoder loss ratio: %f, decoder SINDy loss ratio: %f, SINDy z loss ratio: %f"
-        % loss_ratios
-    )
-
-    return training_loss_vals, validation_loss_vals, loss_ratios
+# NOTE: Legacy TensorFlow print_progress function removed.
+# Progress printing is now handled directly in torch_impl/training.py
 
 def calculate_reconstruction_difference(test_set_results, latent_var, decoder_weights_list, decoder_biases_list, activation_function=None):
     # Get the number of time points and gene expressions

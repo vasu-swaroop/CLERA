@@ -1,8 +1,8 @@
 model_config:
   input_dim: 100
   latent_dim: 6
-  num_classes: 7
-  ae_widths: [512, 32]
+  num_classes: 9
+  ae_widths: [512, 64]
   classifier_widths: [8]
   activation: "relu"
   initialization: "xavier"
@@ -11,6 +11,8 @@ sindy_config:
   model_order: 1
   poly_order: 2
   include_sine: true
+  include_tan: true
+  include_log: true
   include_exp: true
   include_reciprocal_func: true
   innitialization_type: "uniform_discrete"
@@ -29,7 +31,7 @@ train_settings:
   lr: 0.001
   num_epochs: 10000
   refinement_epochs: 500
-  batch_size: 1024
+  batch_size: 256
   threshold_frequency: 150
   coefficient_threshold: 0.1
   max_active_terms: 37
