@@ -80,28 +80,40 @@ class LossTracker:
             "Classification Loss"
         ]
         
-        if len(self.training_losses) > 0:
-            training_array = np.array(self.training_losses)
+        # Check if we have at least one type of loss to plot
+        if len(self.training_losses) > 0 or len(self.validation_losses) > 0:
+            training_array = np.array(self.training_losses) if len(self.training_losses) > 0 else None
             validation_array = np.array(self.validation_losses) if len(self.validation_losses) > 0 else None
             
+            # plot_training_curves expects training_array as the first argument (main curve)
+            # if training_array is None, we swap them but the behavior might be unexpected
+            # Usually we expect both or at least training.
+            primary_array = training_array if training_array is not None else validation_array
+            secondary_array = validation_array if training_array is not None else None
+            
             plot_training_curves(
-                training_array=training_array,
-                validation_array=validation_array,
+                training_array=primary_array,
+                validation_array=secondary_array,
                 feature_names=loss_feature_names,
                 title=f"{save_name} - Training Phase",
                 save_path=f"{save_name}_training_errors.png",
                 scale=print_frequency
             )
+            print(f"  Saved: {save_name}_training_errors.png")
         
-        if len(self.ref_training_losses) > 0:
-            ref_training_array = np.array(self.ref_training_losses)
+        if len(self.ref_training_losses) > 0 or len(self.ref_validation_losses) > 0:
+            ref_training_array = np.array(self.ref_training_losses) if len(self.ref_training_losses) > 0 else None
             ref_validation_array = np.array(self.ref_validation_losses) if len(self.ref_validation_losses) > 0 else None
             
+            primary_ref = ref_training_array if ref_training_array is not None else ref_validation_array
+            secondary_ref = ref_validation_array if ref_training_array is not None else None
+
             plot_training_curves(
-                training_array=ref_training_array,
-                validation_array=ref_validation_array,
+                training_array=primary_ref,
+                validation_array=secondary_ref,
                 feature_names=loss_feature_names,
                 title=f"{save_name} - Refinement Phase",
                 save_path=f"{save_name}_refinement_errors.png",
                 scale=print_frequency
             )
+            print(f"  Saved: {save_name}_refinement_errors.png")

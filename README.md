@@ -67,9 +67,80 @@ After training, navigate to the Inference directory to:
 3. Create interaction networks based on the learned latent variables
 Make sure to choose the appropriate path variables for inference based on the dataset used for training.
 
+## Implementation Notes
+
+### PyTorch Migration
+The original CLERA implementation was built on **TensorFlow 1.6.x** with Python 3.6.7. This codebase has been migrated to **PyTorch 2.x** for better maintainability, modern GPU support, and improved debugging capabilities.
+
+| Feature | Original (TensorFlow) | Current (PyTorch) |
+|---------|----------------------|-------------------|
+| Location | `src/tf_impl/` | `src/torch_impl/` |
+| Python | 3.6.7 | 3.10+ |
+| Framework | TensorFlow 1.6.x | PyTorch 2.x |
+| Config | Hardcoded dicts | YAML files |
+
+The TensorFlow implementation is preserved in `src/tf_impl/` for backward compatibility and reference.
+
 ## Installation
-This code is supported with Python 3.6.7 Run the following command to install the required dependencies:
+
+### Modern PyTorch Setup (Recommended)
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+
+# Install dependencies
 pip install -r requirements.txt
+```
+
+### Running the Examples
+
+Each example (Pancreas, Bone Marrows, SERGIO) now uses a YAML configuration file for all training parameters.
+
+**1. Configure your experiment:**
+Edit `Examples/<Dataset>/train_config.yaml` to customize:
+- Model architecture (`model_config`)
+- SINDy library settings (`sindy_config`)
+- Loss weights (`loss_weights`)
+- Training hyperparameters (`train_settings`)
+- Experiment naming (`training_config`)
+
+**2. Run training:**
+```bash
+# From the project root directory
+export PYTHONPATH=$PYTHONPATH:$(pwd)
+
+# Run Pancreas example
+python Examples/Pancreas/train_model.py
+
+# Run Bone Marrows example
+python "Examples/Bone Marrows/train_model.py"
+
+# Run SERGIO example
+python Examples/SERGIO/train_model.py
+```
+
+**3. Output location:**
+Results are saved to `Examples/<Dataset>/experiments/<experiment_name>/` as configured in the YAML file.
+
+### Transfer Learning
+
+CLERA supports transfer learning to reuse pretrained autoencoder and SINDy weights across datasets. This loads the encoder, decoder, and SINDy coefficients while keeping a **fresh coefficient mask** to allow new sparsity pattern discovery.
+
+**Configure in YAML:**
+```yaml
+training_config:
+  # ... other settings ...
+  transfer_learning_path: "../Pancreas/experiments/pancreas_test_01/model.pt"
+```
+
+**What gets loaded:**
+- ✅ Encoder weights
+- ✅ Decoder weights
+- ✅ SINDy coefficients
+- ❌ Coefficient mask (fresh for new sparsity discovery)
+- ❌ Classifier weights (re-initialized for new classes)
 
 
 ## Structure
