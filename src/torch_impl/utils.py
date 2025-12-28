@@ -18,10 +18,9 @@ def load_checkpoint(model, optimizer, load_path):
     return checkpoint['epoch']
 
 
+@torch.no_grad()
 def apply_coefficient_thresholding(model, threshold):
-    import torch
-    with torch.no_grad():
-        coeffs = model.sindy.coefficients
-        mask = (torch.abs(coeffs) > threshold).float()
-        model.sindy.coefficient_mask.data = mask
-        return int(mask.sum().item())
+    coeffs = model.sindy.coefficients
+    mask = (torch.abs(coeffs) > threshold).float()
+    model.sindy.coefficient_mask.data = mask
+    return int(mask.sum().item())

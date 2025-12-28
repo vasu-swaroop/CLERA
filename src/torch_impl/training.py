@@ -86,7 +86,9 @@ def train_network(
     print("=" * 50)
     print("TRAINING PHASE")
     print("=" * 50)
-    
+
+    num_terms=int(model.sindy.coefficient_mask.sum().item())
+
     for epoch in tqdm(range(epoch_start, train_settings.num_epochs), desc="Training"):
         model.train()
         for inp_data in train_dataloader:
@@ -102,24 +104,19 @@ def train_network(
         if training_config.print_progress and (epoch % training_config.print_frequency == 0):
             model.eval()
             with torch.no_grad():
-                train_sample = next(iter(train_dataloader))
-                train_out = model(train_sample['x'])
-                train_losses = compute_loss_components(model, train_out, train_sample, training_config.loss_weights)
-                loss_tracker.update_losses(train_losses, 'train')
                 
                 val_sample = next(iter(val_dataloader))
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
                 loss_tracker.update_losses(val_losses, 'val')
-                
-                loss_tracker.print_losses(epoch, 'train+val')
-        
+
+        #Apply Sequential thresholding               
         if train_settings.sequential_thresholding and (epoch % train_settings.threshold_frequency == 0) and (epoch > 0):
             num_terms = apply_coefficient_thresholding(model, train_settings.coefficient_threshold)
             loss_tracker.sindy_model_terms.append(num_terms)
             print(f"THRESHOLDING: {num_terms} active coefficients")
         
-        if train_settings.max_active_terms is not None and num_terms < train_settings.max_active_terms:
+        if num_terms<train_settings.max_active_terms:
             print("Maximum active terms in RHS achieved, begining the refinement phase")
             break
     
@@ -142,12 +139,7 @@ def train_network(
         
         if training_config.print_progress and (epoch % training_config.print_frequency == 0):
             model.eval()
-            with torch.no_grad():
-                train_sample = next(iter(train_dataloader))
-                train_out = model(train_sample['x'])
-                train_losses = compute_loss_components(model, train_out, train_sample, training_config.loss_weights)
-                loss_tracker.update_refinement_losses(train_losses, 'train')
-                
+            with torch.no_grad():                
                 val_sample = next(iter(val_dataloader))
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
@@ -234,16 +226,16 @@ def test_training():
     
     # Create model
     sindy_ae = SINDyAE(training_config.sindy_ae_config)
-    print("✓ Model created successfully")
+    print(" Model created successfully")
     
     # Generate dummy input
     inp = generate_dummy_data(data_dim, class_size, batch_size)
-    print("✓ Dummy data generated")
+    print(" Dummy data generated")
     
     # Test forward pass
     with torch.no_grad():
         model_out = sindy_ae(inp['x'])
-        print("✓ Forward pass successful")
+        print(" Forward pass successful")
         print(f"  Output keys: {list(model_out.keys())}")
     
     # Test loss computation
@@ -251,15 +243,15 @@ def test_training():
     
     # Test apply_sindy_ae_loss
     loss_train = apply_sindy_ae_loss(sindy_ae, loss_weights, model_out, inp)
-    print(f"✓ Training loss computed: {loss_train.item():.4f}")
+    print(f" Training loss computed: {loss_train.item():.4f}")
     
     # Test compute_refinement_loss
     loss_refine = compute_refinement_loss(sindy_ae, loss_weights, model_out, inp)
-    print(f"✓ Refinement loss computed: {loss_refine.item():.4f}")
+    print(f" Refinement loss computed: {loss_refine.item():.4f}")
     
     # Test compute_loss_components
     loss_components = compute_loss_components(sindy_ae, model_out, inp, loss_weights)
-    print("✓ Loss components computed:")
+    print(" Loss components computed:")
     for key, val in loss_components.items():
         print(f"  {key}: {val:.6f}")
     
@@ -268,9 +260,9 @@ def test_training():
     optimizer.zero_grad()
     loss_train.backward()
     optimizer.step()
-    print("✓ Backward pass and optimizer step successful")
+    print(" Backward pass and optimizer step successful")
     
-    print("\n✅ All training tests passed!")
+    print("All training tests passed!")
 
 
 if __name__ == '__main__':
