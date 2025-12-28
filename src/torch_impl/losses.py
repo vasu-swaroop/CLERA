@@ -1,7 +1,18 @@
 from typing import Dict, List
+from dataclasses import dataclass
 import torch
 from torch import nn
 import torch.nn.functional as F
+
+
+@dataclass
+class LossWeights:
+    recon_wt: float
+    sindy_wt_x: float
+    sindy_wt_z: float
+    class_wt: float
+    l1_reg: float
+    sindy_reg_wt: float
 
 
 def get_sindy_z_loss(dz_true: torch.Tensor, dz_sindy_pred: torch.Tensor) -> torch.Tensor:
@@ -36,7 +47,7 @@ def compute_losses(
     model: nn.Module,
     out_dict: Dict[str, torch.Tensor],
     inp_data: Dict[str, torch.Tensor],
-    loss_weights: 'LossWeights',
+    loss_weights: LossWeights,
     include_sindy_reg: bool = True
 ) -> Dict[str, torch.Tensor]:
     """
@@ -75,7 +86,8 @@ def compute_losses(
         loss_weights.sindy_wt_z * sindy_z +
         loss_weights.sindy_wt_x * sindy_x +
         loss_weights.class_wt * class_loss +
-        sindy_reg + ae_reg
+        loss_weights.sindy_reg_wt * sindy_reg +
+        ae_reg
     )
     
     return {
@@ -100,7 +112,7 @@ def compute_refinement_loss(model, loss_weights, out_dict, inp_data) -> torch.Te
     return compute_losses(model, out_dict, inp_data, loss_weights, include_sindy_reg=False)['total']
 
 
-def compute_loss_components(model, out_dict, inp_data, loss_weights) -> Dict[str, float]:
+def compute_loss_components(model, out_dict, inp_data, loss_weights, include_sindy_reg=True) -> Dict[str, float]:
     """For logging - returns dict of floats."""
-    losses = compute_losses(model, out_dict, inp_data, loss_weights, include_sindy_reg=True)
+    losses = compute_losses(model, out_dict, inp_data, loss_weights, include_sindy_reg=include_sindy_reg)
     return {k: v.item() for k, v in losses.items()}

@@ -13,8 +13,8 @@ sindy_config:
   include_sine: true
   include_exp: true
   include_reciprocal_func: true
-  initialization_type: "uniform_discrete"
-  initialization_set: [-1, 1]
+  innitialization_type: "uniform_discrete"
+  innitialization_set: [-1, 1]
 
 loss_weights:
   recon_wt: 10.0

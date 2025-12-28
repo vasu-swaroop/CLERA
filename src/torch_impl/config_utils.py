@@ -1,7 +1,8 @@
 import os
 import yaml
 from src.torch_impl.autoencoder import SINDyConfig, MLPConfig, SINDyAEConfig, Activation, Initialization
-from src.torch_impl.training import LossWeights, TrainSettings, TrainingConfig
+from src.torch_impl.losses import LossWeights
+from src.torch_impl.training import TrainSettings, TrainingConfig
 
 def load_yaml_config(config_path):
     """Load configuration from a YAML file."""
@@ -56,7 +57,9 @@ def build_training_config(config, script_dir):
         poly_order=sindy_params.get('poly_order', 2),
         include_sine=sindy_params.get('include_sine', True),
         include_exp=sindy_params.get('include_exp', True),
-        include_reciprocal_func=sindy_params.get('include_reciprocal_func', True)
+        include_reciprocal_func=sindy_params.get('include_reciprocal_func', True),
+        innitialization_type=sindy_params.get('innitialization_type', None),
+        innitialization_set=tuple(sindy_params.get('innitialization_set', (1,)))
     )
 
     sindy_ae_config = SINDyAEConfig(
@@ -73,7 +76,8 @@ def build_training_config(config, script_dir):
         sindy_wt_z=loss_params.get('sindy_wt_z', 1e-2),
         sindy_wt_x=loss_params.get('sindy_wt_x', 1e-1),
         class_wt=loss_params.get('class_wt', 1.0),
-        l1_reg=loss_params.get('l1_reg', 1e-2)
+        l1_reg=loss_params.get('l1_reg', 1e-2),
+        sindy_reg_wt=loss_params.get('sindy_reg_wt', 8e-3)
     )
 
     # Train Settings

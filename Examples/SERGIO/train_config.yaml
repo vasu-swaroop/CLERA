@@ -13,8 +13,8 @@ sindy_config:
   include_sine: true
   include_exp: true
   include_reciprocal_func: true
-  initialization_type: "uniform_discrete"
-  initialization_set: [-1, 1]
+  innitialization_type: "uniform_discrete"
+  innitialization_set: [-1, 1]
 
 loss_weights:
   recon_wt: 10.0
@@ -22,6 +22,7 @@ loss_weights:
   sindy_wt_x: 0.1
   class_wt: 1.0
   l1_reg: 1.0
+  sindy_reg_wt: 8e-3
 
 train_settings:
   optimizer: "adam"

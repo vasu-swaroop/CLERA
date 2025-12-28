@@ -96,7 +96,7 @@ class SINDy(nn.Module):
 
         # Initialize the masks with one. When loading, register buffer can learn appropriately
         self.register_buffer("coefficient_mask", torch.ones(self.library_size, self.sindy_config.latent_dim))
-    
+        self.init_sindy_coefficients()
     @torch.no_grad()
     def init_sindy_coefficients(self):
         """

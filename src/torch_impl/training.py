@@ -8,7 +8,7 @@ from torch.optim import Adam
 import torch.nn as nn
 
 from src.torch_impl.autoencoder import SINDyAEConfig, SINDyAE
-from src.torch_impl.losses import apply_sindy_ae_loss, compute_refinement_loss, compute_loss_components
+from src.torch_impl.losses import apply_sindy_ae_loss, compute_refinement_loss, compute_loss_components, LossWeights
 from src.torch_impl.utils import save_checkpoint, load_checkpoint, apply_coefficient_thresholding
 from src.core.loss_tracker import LossTracker
 
@@ -29,13 +29,6 @@ class SINDyDataset(Dataset):
             'classes': self.classes[idx]
         }
 
-@dataclass
-class LossWeights:
-    recon_wt: float
-    sindy_wt_x: float
-    sindy_wt_z: float
-    class_wt: float
-    l1_reg: float
 
 @dataclass
 class TrainSettings:
@@ -82,17 +75,25 @@ def train_network(
     train_dataloader = DataLoader(train_dataset, batch_size=train_settings.batch_size, shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=train_settings.batch_size, shuffle=False)
     
+    is_cuda= torch.cuda.is_available()
+    if is_cuda:
+        device= "cuda:0"
+    else:
+        device= "cpu"
+
+    model.to(device)
     # Training Phase
     print("=" * 50)
     print("TRAINING PHASE")
     print("=" * 50)
 
     num_terms=int(model.sindy.coefficient_mask.sum().item())
-
     for epoch in tqdm(range(epoch_start, train_settings.num_epochs), desc="Training"):
         model.train()
         for inp_data in train_dataloader:
             optimizer.zero_grad()
+            for key, val in inp_data.items():
+                inp_data[key]=val.to(device)
             x = inp_data['x']
             dx = inp_data['dx']
             
@@ -104,8 +105,10 @@ def train_network(
         if training_config.print_progress and (epoch % training_config.print_frequency == 0):
             model.eval()
             with torch.no_grad():
-                
                 val_sample = next(iter(val_dataloader))
+                for key, val in val_sample.items():
+                    val_sample[key]=val.to(device)
+
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
                 loss_tracker.update_losses(val_losses, 'val')
@@ -129,6 +132,8 @@ def train_network(
         model.train()
         for inp_data in train_dataloader:
             optimizer.zero_grad()
+            for key, val in inp_data.items():
+                inp_data[key]=val.to(device)
             x = inp_data['x']
             dx = inp_data['dx']
             
@@ -141,6 +146,10 @@ def train_network(
             model.eval()
             with torch.no_grad():                
                 val_sample = next(iter(val_dataloader))
+                for key, val in val_sample.items():
+                    val_sample[key]=val.to(device)
+
+
                 val_out = model(val_sample['x'])
                 val_losses = compute_loss_components(model, val_out, val_sample, training_config.loss_weights)
                 loss_tracker.update_refinement_losses(val_losses, 'val')
