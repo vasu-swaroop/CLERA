@@ -1,5 +1,7 @@
 # CLERA - Cellular Latent Equations Representation and Analysis
 
+> **🔥 PyTorch Migration Complete**: This codebase has been migrated from TensorFlow 1.6.x to **PyTorch 2.x** for modern GPU support, improved debugging, and better maintainability. See [Implementation Notes](#implementation-notes) for details.
+
 CLERA is a novel end-to-end computational framework designed to uncover parsimonious dynamical models and identify active gene programs from single-cell RNA sequencing data. This repository contains the code used to train and demonstrate CLERA on three scRNA datasets. This work can be used for causal representation learning by incorporating prior knowledge of the system.
 
 ## Usage
@@ -83,20 +85,39 @@ The TensorFlow implementation is preserved in `src/tf_impl/` for backward compat
 
 ## Installation
 
-### Modern PyTorch Setup (Recommended)
+### Using uv (Recommended)
+
+[uv](https://docs.astral.sh/uv/) is a fast Python package manager. Install it first if you haven't:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then set up the environment:
+```bash
+# Create virtual environment and sync dependencies with PyTorch
+uv sync --extra torch
+
+# For development (includes pytest, black, etc.)
+uv sync --extra torch --extra dev
+```
+
+### Using pip (Alternative)
 ```bash
 # Create virtual environment
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
 # .venv\Scripts\activate   # Windows
 
-# Install dependencies
-pip install -r requirements.txt
+# Install base + PyTorch dependencies
+pip install -e ".[torch]"
+
+# For development
+pip install -e ".[torch,dev]"
 ```
 
 ### Running the Examples
 
-Each example (Pancreas, Bone Marrows, SERGIO) now uses a YAML configuration file for all training parameters.
+Each example (Pancreas, Bone Marrows, SERGIO) uses a YAML configuration file for all training parameters.
 
 **1. Configure your experiment:**
 Edit `Examples/<Dataset>/train_config.yaml` to customize:
@@ -108,17 +129,14 @@ Edit `Examples/<Dataset>/train_config.yaml` to customize:
 
 **2. Run training:**
 ```bash
-# From the project root directory
-export PYTHONPATH=$PYTHONPATH:$(pwd)
+# Using uv (recommended)
+uv run python Examples/Pancreas/train_model.py
+uv run python "Examples/Bone Marrows/train_model.py"
+uv run python Examples/SERGIO/train_model.py
 
-# Run Pancreas example
+# Or activate the environment first, then run directly
+source .venv/bin/activate
 python Examples/Pancreas/train_model.py
-
-# Run Bone Marrows example
-python "Examples/Bone Marrows/train_model.py"
-
-# Run SERGIO example
-python Examples/SERGIO/train_model.py
 ```
 
 **3. Output location:**
