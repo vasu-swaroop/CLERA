@@ -2,3 +2,5 @@
 *.index
 src/__pycache__
 **/*.pdf
+**/*.pyc
+*.pt

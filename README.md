@@ -1,5 +1,7 @@
 # CLERA - Cellular Latent Equations Representation and Analysis
 
+> **🔥 PyTorch Migration Complete**: This codebase has been migrated from TensorFlow 1.6.x to **PyTorch 2.x** for modern GPU support, improved debugging, and better maintainability. See [Implementation Notes](#implementation-notes) for details.
+
 CLERA is a novel end-to-end computational framework designed to uncover parsimonious dynamical models and identify active gene programs from single-cell RNA sequencing data. This repository contains the code used to train and demonstrate CLERA on three scRNA datasets. This work can be used for causal representation learning by incorporating prior knowledge of the system.
 
 ## Usage
@@ -67,9 +69,96 @@ After training, navigate to the Inference directory to:
 3. Create interaction networks based on the learned latent variables
 Make sure to choose the appropriate path variables for inference based on the dataset used for training.
 
+## Implementation Notes
+
+### PyTorch Migration
+The original CLERA implementation was built on **TensorFlow 1.6.x** with Python 3.6.7. This codebase has been migrated to **PyTorch 2.x** for better maintainability, modern GPU support, and improved debugging capabilities.
+
+| Feature | Original (TensorFlow) | Current (PyTorch) |
+|---------|----------------------|-------------------|
+| Location | `src/tf_impl/` | `src/torch_impl/` |
+| Python | 3.6.7 | 3.10+ |
+| Framework | TensorFlow 1.6.x | PyTorch 2.x |
+| Config | Hardcoded dicts | YAML files |
+
+The TensorFlow implementation is preserved in `src/tf_impl/` for backward compatibility and reference.
+
 ## Installation
-This code is supported with Python 3.6.7 Run the following command to install the required dependencies:
-pip install -r requirements.txt
+
+### Using uv (Recommended)
+
+[uv](https://docs.astral.sh/uv/) is a fast Python package manager. Install it first if you haven't:
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+Then set up the environment:
+```bash
+# Create virtual environment and sync dependencies with PyTorch
+uv sync --extra torch
+
+# For development (includes pytest, black, etc.)
+uv sync --extra torch --extra dev
+```
+
+### Using pip (Alternative)
+```bash
+# Create virtual environment
+python -m venv .venv
+source .venv/bin/activate  # Linux/Mac
+# .venv\Scripts\activate   # Windows
+
+# Install base + PyTorch dependencies
+pip install -e ".[torch]"
+
+# For development
+pip install -e ".[torch,dev]"
+```
+
+### Running the Examples
+
+Each example (Pancreas, Bone Marrows, SERGIO) uses a YAML configuration file for all training parameters.
+
+**1. Configure your experiment:**
+Edit `Examples/<Dataset>/train_config.yaml` to customize:
+- Model architecture (`model_config`)
+- SINDy library settings (`sindy_config`)
+- Loss weights (`loss_weights`)
+- Training hyperparameters (`train_settings`)
+- Experiment naming (`training_config`)
+
+**2. Run training:**
+```bash
+# Using uv (recommended)
+uv run python Examples/Pancreas/train_model.py
+uv run python "Examples/Bone Marrows/train_model.py"
+uv run python Examples/SERGIO/train_model.py
+
+# Or activate the environment first, then run directly
+source .venv/bin/activate
+python Examples/Pancreas/train_model.py
+```
+
+**3. Output location:**
+Results are saved to `Examples/<Dataset>/experiments/<experiment_name>/` as configured in the YAML file.
+
+### Transfer Learning
+
+CLERA supports transfer learning to reuse pretrained autoencoder and SINDy weights across datasets. This loads the encoder, decoder, and SINDy coefficients while keeping a **fresh coefficient mask** to allow new sparsity pattern discovery.
+
+**Configure in YAML:**
+```yaml
+training_config:
+  # ... other settings ...
+  transfer_learning_path: "../Pancreas/experiments/pancreas_test_01/model.pt"
+```
+
+**What gets loaded:**
+- ✅ Encoder weights
+- ✅ Decoder weights
+- ✅ SINDy coefficients
+- ❌ Coefficient mask (fresh for new sparsity discovery)
+- ❌ Classifier weights (re-initialized for new classes)
 
 
 ## Structure

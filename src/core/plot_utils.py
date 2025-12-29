@@ -1,71 +1,118 @@
 import numpy as np
+from typing import List, Optional, Any
 from sklearn.metrics import adjusted_rand_score
 import matplotlib.pyplot as plt
 import networkx as nx
 from matplotlib.lines import Line2D
 
+
+def plot_training_curves(
+    training_array: np.ndarray,
+    validation_array: Optional[np.ndarray],
+    feature_names: List[str],
+    title: str,
+    save_path: str,
+    scale: int = 1
+):
+    num_features = training_array.shape[1]
+    num_epochs = training_array.shape[0]
+    
+    fig, axes = plt.subplots(nrows=num_features, ncols=1, figsize=(10, 8 * num_features))
+    
+    if num_features == 1:
+        axes = [axes]
+    
+    for i in range(num_features):
+        training_values = training_array[:, i]
+        scaled_epochs = np.arange(0, num_epochs) * scale
         
-def extract_weights_biases(test_set_results, num_layers):
-    """
-    Extract weights and biases dictionaries from the test_set_results.
-    
-    Arguments:
-        test_set_results (dict): Dictionary containing the test set results.
-        num_layers (int): Number of network layers.
+        axes[i].plot(scaled_epochs, training_values, label="Training")
         
-    Returns:
-        encoder_weights (dict): Dictionary containing encoder weights.
-        encoder_biases (dict): Dictionary containing encoder biases.
-        decoder_weights (dict): Dictionary containing decoder weights.
-        decoder_biases (dict): Dictionary containing decoder biases.
+        if validation_array is not None:
+            validation_values = validation_array[:, i]
+            axes[i].plot(scaled_epochs, validation_values, "--", label="Validation")
+        
+        axes[i].set_title(feature_names[i])
+        axes[i].set_xlabel("Epochs")
+        axes[i].set_ylabel("Error")
+        axes[i].legend()
+    
+    fig.suptitle(title)
+    fig.savefig(save_path)
+    plt.tight_layout()
+    plt.close(fig)
+
+        
+
+def plot_curves(
+    start: int,
+    title: str,
+    feature_names: List[str],
+    params: Any,
+    axis_name: str,
+    training_array: np.ndarray,
+    validation_exists: bool = False,
+    validation_array: Optional[np.ndarray] = None,
+    scale: int = 1,
+) -> None:
     """
-    encoder_weights = {}
-    encoder_biases = {}
-    decoder_weights = {}
-    decoder_biases = {}
-    
-    # Loop through each layer to extract weights and biases
-    for layer in range(num_layers + 1):
-        encoder_weights[layer] = test_set_results[f'encoder_weights'][layer]
-        encoder_biases[layer] = test_set_results[f'encoder_biases'][layer]
-        decoder_weights[layer] = test_set_results[f'decoder_weights'][layer]
-        decoder_biases[layer] = test_set_results[f'decoder_biases'][layer]
-    
-    encoder_weights_list = [encoder_weights[layer] for layer in range(num_layers + 1)]
-    encoder_biases_list = [encoder_biases[layer] for layer in range(num_layers + 1)]
-    decoder_weights_list = [decoder_weights[layer] for layer in range(num_layers + 1)]
-    decoder_biases_list = [decoder_biases[layer] for layer in range(num_layers + 1)]
-    
-    return encoder_weights_list, encoder_biases_list, decoder_weights_list, decoder_biases_list
-
-# Define numpy functions for activation functions
-def relu(x):
-    return np.maximum(0, x)
-
-def elu(x, alpha=1.0):
-    return np.where(x > 0, x, alpha * (np.exp(x) - 1))
-
-def sigmoid(x):
-    return 1 / (1 + np.exp(-x))
-
-def select_activation_function(activation):
+    Plot training and validation curves for various features.
     """
-    Select the appropriate activation function based on the given activation string.
-    Arguments:
-        activation - String, activation function name ('relu', 'elu', 'sigmoid', etc.)
-    Returns:
-        activation_function - Numpy function, the selected activation function
-    """
-    if activation == 'relu':
-        activation_function = relu
-    elif activation == 'elu':
-        activation_function = elu
-    elif activation == 'sigmoid':
-        activation_function = sigmoid
-    else:
-        activation_function = None
+    num_features = training_array.shape[1]  # Number of features
+    num_epochs = training_array.shape[0]  # Number of samples
+
+    # Prepare subplots
+    fig, axes = plt.subplots(
+        nrows=num_features, ncols=1, figsize=(10, 8 * num_features)
+    )
     
-    return activation_function
+    # If there's only one feature, axes is not a list/array but a single Axes object
+    if num_features == 1:
+        axes = [axes]
+
+    # Loop through each feature
+    for i in range(num_features):
+        training_feature_values = training_array[:, i]
+
+        # Multiply epochs by scale to scale the x-axis values
+        scaled_epochs = np.arange(0, num_epochs) * scale
+
+        # Plot the training curve
+        axes[i].plot(scaled_epochs, training_feature_values, label="Training")
+
+        # Plot the validation curve as dashed
+        if validation_exists and validation_array is not None:
+            validation_feature_values = validation_array[:, i]
+            axes[i].plot(
+                scaled_epochs, validation_feature_values, "--", label="Validation"
+            )
+
+        # Set plot title
+        axes[i].set_title(feature_names[i])
+
+        # Set plot labels
+        axes[i].set_xlabel("Epochs")
+        axes[i].set_ylabel(axis_name)
+
+        # Add legend
+        axes[i].legend()
+
+    # Set the main plot title
+    fig.suptitle(title)
+
+    # Save the plot as an image
+    fig.savefig(title + ".png")
+
+    # Adjust layout for better spacing
+    plt.tight_layout()
+
+    # Note: plt.show() blocks execution, commented out for non-interactive
+    # plt.show()
+    # time.sleep(1)
+
+
+# NOTE: Legacy TensorFlow print_progress function removed.
+# Progress printing is now handled directly in torch_impl/training.py
 
 def calculate_reconstruction_difference(test_set_results, latent_var, decoder_weights_list, decoder_biases_list, activation_function=None):
     # Get the number of time points and gene expressions
@@ -234,4 +281,4 @@ def plot_top_nodes(cluster_index, top_nodes):
     plt.xticks(range(len(genes)), genes)
     plt.ylabel('Values')
     plt.title(f'Top 40 nodes for Cluster {cluster_index}')
-    plt.show()
+    plt.show() 

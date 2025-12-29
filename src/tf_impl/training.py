@@ -321,118 +321,67 @@ def train_network(
 
         return results_dict
 
-
-def plot_curves(
-    start: int,
-    title: str,
-    feature_names: List[str],
-    params: Any,
-    axis_name: str,
-    training_array: np.ndarray,
-    validation_exists: bool = False,
-    validation_array: Optional[np.ndarray] = None,
-    scale: int = 1,
-) -> None:
+def extract_weights_biases(test_set_results, num_layers):
     """
-    Plot training and validation curves for various features.
-    """
-    num_features = training_array.shape[1]  # Number of features
-    num_epochs = training_array.shape[0]  # Number of samples
-
-    # Prepare subplots
-    fig, axes = plt.subplots(
-        nrows=num_features, ncols=1, figsize=(10, 8 * num_features)
-    )
+    Extract weights and biases dictionaries from the test_set_results.
     
-    # If there's only one feature, axes is not a list/array but a single Axes object
-    if num_features == 1:
-        axes = [axes]
-
-    # Loop through each feature
-    for i in range(num_features):
-        training_feature_values = training_array[:, i]
-
-        # Multiply epochs by scale to scale the x-axis values
-        scaled_epochs = np.arange(0, num_epochs) * scale
-
-        # Plot the training curve
-        axes[i].plot(scaled_epochs, training_feature_values, label="Training")
-
-        # Plot the validation curve as dashed
-        if validation_exists and validation_array is not None:
-            validation_feature_values = validation_array[:, i]
-            axes[i].plot(
-                scaled_epochs, validation_feature_values, "--", label="Validation"
-            )
-
-        # Set plot title
-        axes[i].set_title(feature_names[i])
-
-        # Set plot labels
-        axes[i].set_xlabel("Epochs")
-        axes[i].set_ylabel(axis_name)
-
-        # Add legend
-        axes[i].legend()
-
-    # Set the main plot title
-    fig.suptitle(title)
-
-    # Save the plot as an image
-    fig.savefig(title + ".png")
-
-    # Adjust layout for better spacing
-    plt.tight_layout()
-
-    # Note: plt.show() blocks execution, commented out for non-interactive
-    # plt.show()
-    # time.sleep(1)
-
-
-def print_progress(
-    sess: tf.Session,
-    i: int,
-    loss: tf.Tensor,
-    losses: Dict[str, tf.Tensor],
-    train_dict: Dict[str, Any],
-    validation_dict: Dict[str, Any],
-    x_norm: float,
-    sindy_predict_norm: float,
-    z_norm: float,
-) -> Tuple[np.ndarray, np.ndarray, Tuple[float, float, float]]:
+    Arguments:
+        test_set_results (dict): Dictionary containing the test set results.
+        num_layers (int): Number of network layers.
+        
+    Returns:
+        encoder_weights (dict): Dictionary containing encoder weights.
+        encoder_biases (dict): Dictionary containing encoder biases.
+        decoder_weights (dict): Dictionary containing decoder weights.
+        decoder_biases (dict): Dictionary containing decoder biases.
     """
-    Print loss function values to keep track of the training progress.
+    encoder_weights = {}
+    encoder_biases = {}
+    decoder_weights = {}
+    decoder_biases = {}
+    
+    # Loop through each layer to extract weights and biases
+    for layer in range(num_layers + 1):
+        encoder_weights[layer] = test_set_results[f'encoder_weights'][layer]
+        encoder_biases[layer] = test_set_results[f'encoder_biases'][layer]
+        decoder_weights[layer] = test_set_results[f'decoder_weights'][layer]
+        decoder_biases[layer] = test_set_results[f'decoder_biases'][layer]
+    
+    encoder_weights_list = [encoder_weights[layer] for layer in range(num_layers + 1)]
+    encoder_biases_list = [encoder_biases[layer] for layer in range(num_layers + 1)]
+    decoder_weights_list = [decoder_weights[layer] for layer in range(num_layers + 1)]
+    decoder_biases_list = [decoder_biases[layer] for layer in range(num_layers + 1)]
+    
+    return encoder_weights_list, encoder_biases_list, decoder_weights_list, decoder_biases_list
+
+# Define numpy functions for activation functions
+def relu(x):
+    return np.maximum(0, x)
+
+def elu(x, alpha=1.0):
+    return np.where(x > 0, x, alpha * (np.exp(x) - 1))
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def select_activation_function(activation):
     """
-    training_loss_vals = sess.run(
-        (loss,) + tuple(losses.values()), feed_dict=train_dict
-    )
-    validation_loss_vals = sess.run(
-        (loss,) + tuple(losses.values()), feed_dict=validation_dict
-    )
-
-    print("Epoch %d" % i)
-    print("Training loss {0}, {1}".format(training_loss_vals[0], training_loss_vals[1:]))
-    print(
-        "Validation loss {0}, {1}".format(
-            validation_loss_vals[0], validation_loss_vals[1:]
-        )
-    )
-    decoder_losses = sess.run(
-        (losses["decoder"], losses["sindy_x"], losses["sindy_z"]),
-        feed_dict=validation_dict,
-    )
-
-    loss_ratios = (
-        decoder_losses[0] / x_norm,
-        decoder_losses[1] / sindy_predict_norm,
-        decoder_losses[2] / z_norm,
-    )
-    print(
-        "decoder loss ratio: %f, decoder SINDy loss ratio: %f, SINDy z loss ratio: %f"
-        % loss_ratios
-    )
-
-    return training_loss_vals, validation_loss_vals, loss_ratios
+    Select the appropriate activation function based on the given activation string.
+    Arguments:
+        activation - String, activation function name ('relu', 'elu', 'sigmoid', etc.)
+    Returns:
+        activation_function - Numpy function, the selected activation function
+    """
+    if activation == 'relu':
+        activation_function = relu
+    elif activation == 'elu':
+        activation_function = elu
+    elif activation == 'sigmoid':
+        activation_function = sigmoid
+    else:
+        activation_function = None
+    
+    return activation_function
 
 
 def create_feed_dictionary(

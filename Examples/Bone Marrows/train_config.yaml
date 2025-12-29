@@ -1,0 +1,45 @@
+model_config:
+  input_dim: 2000
+  latent_dim: 6
+  num_classes: 8
+  ae_widths: [512, 64]
+  classifier_widths: [8]
+  activation: "relu"
+  initialization: "xavier"
+
+sindy_config:
+  model_order: 1
+  poly_order: 2
+  include_sine: true
+  include_exp: true
+  include_reciprocal_func: true
+  innitialization_type: "uniform_discrete"
+  innitialization_set: [-1, 1]
+
+loss_weights:
+  recon_wt: 10.0
+  sindy_wt_z: 1e-2
+  sindy_wt_x: 1e-1
+  class_wt: 1e-5
+  l1_reg: 1e-6
+  sindy_reg_wt: 1e-4
+
+train_settings:
+  optimizer: "adam"
+  lr: 0.001
+  num_epochs: 10000
+  refinement_epochs: 500
+  batch_size: 256
+  threshold_frequency: 500
+  coefficient_threshold: 0.1
+  sequential_thresholding: true
+  max_active_terms: 37
+
+training_config:
+  print_progress: true
+  print_frequency: 50
+  plot_loss: true
+  experiments_dir: "experiments"
+  experiment_name: "bonemarrows_test_01"
+  save_model_path: "model.pt"
+  transfer_learning_path: "../Pancreas/experiments/pancreas_test_01/model.pt"
