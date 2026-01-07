@@ -10,9 +10,8 @@ from src.core.preprocess_utils import split_data
 
 # Use the directory where this script is located as the default data path
 script_dir = os.path.dirname(os.path.abspath(__file__))
-# Data is stored in the project's centralized data directory
-project_root = os.path.dirname(os.path.dirname(script_dir))
-data_path = os.path.join(project_root, 'data', 'Pancreas')
+# Data is now stored in the script directory's data subdirectory
+data_path = os.path.join(script_dir, 'data')
 
 # Load YAML configuration
 config_path = os.path.join(script_dir, 'train_config.yaml')

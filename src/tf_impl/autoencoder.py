@@ -1,4 +1,7 @@
 import tensorflow as tf
+# Enable TF 1.x behavior in TF 2.x for backward compatibility
+tf.compat.v1.disable_v2_behavior()
+
 from typing import Dict, List, Tuple, Any, Optional, Callable
 
 
@@ -95,7 +98,7 @@ def full_network(params: Dict[str, Any]) -> Dict[str, Any]:
         sindy_coefficients = tf.get_variable(
             "sindy_coefficients",
             shape=[library_dim, latent_dim],
-            initializer=tf.contrib.layers.xavier_initializer(),
+            initializer=tf.compat.v1.initializers.glorot_uniform(),
         )
     elif params["coefficient_initialization"] == "specified":
         sindy_coefficients = tf.get_variable(

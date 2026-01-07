@@ -7,6 +7,8 @@ from typing import Dict, Any, List, Tuple
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+# Enable TF 1.x behavior in TF 2.x for backward compatibility
+tf.compat.v1.disable_v2_behavior()
 
 from autoencoder import full_network, define_loss
 
