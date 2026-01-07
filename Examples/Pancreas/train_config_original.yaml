@@ -27,10 +27,10 @@ loss_weights:
 train_settings:
   optimizer: "adam"
   lr: 0.001
-  num_epochs: 500  # Reduced from 10000 for quick test
-  refinement_epochs: 50  # Reduced from 500
+  num_epochs: 10000
+  refinement_epochs: 500
   batch_size: 256
-  threshold_frequency: 50  # Reduced from 150
+  threshold_frequency: 150
   coefficient_threshold: 0.1
   max_active_terms: 37
   sequential_thresholding: true
@@ -40,5 +40,5 @@ training_config:
   print_frequency: 50
   plot_loss: true
   experiments_dir: "experiments"
-  experiment_name: "pancreas_quick_test"
+  experiment_name: "pancreas_test_01"
   save_model_path: "model.pt"

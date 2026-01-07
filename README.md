@@ -67,7 +67,8 @@ After training, navigate to the Inference directory to:
 1. Select the best experiment
 2. Find SHAP values for the best experiment
 3. Create interaction networks based on the learned latent variables
-Make sure to choose the appropriate path variables for inference based on the dataset used for training.
+
+The Inference directory contains separate subdirectories for PyTorch (`torch/`) and TensorFlow (`tf/`) implementations. Use the PyTorch notebooks for new experiments.
 
 ## Implementation Notes
 
@@ -165,20 +166,41 @@ training_config:
 
 ```bash
 ├── src
-│   ├── Training scripts            # Scripts for model training
-│   ├── Utility Files               # Helper functions and utilities
+│   ├── torch_impl/              # PyTorch implementation (recommended)
+│   │   ├── autoencoder.py
+│   │   ├── training.py
+│   │   └── ...
+│   ├── tf_impl/                 # TensorFlow implementation (legacy)
+│   │   ├── autoencoder.py
+│   │   ├── training.py
+│   │   └── ...
+│   └── ...                      # Shared utilities
 ├── Examples
 │   ├── Pancreas
-│   │   ├── Experiment Name
-│   │   │       ├── result_hyperparam   # Loss curves, results and checkpoint for each run
-│   │   │       ├── chosen_exp_components     # Saved components from the chosen experiment
-│   │   │       └── experiment_runs.pickle    # Pickle file with experiment data
-│   ├── Bone_Marrow
-│   ├── SERGIO
-├── Inference
-│   ├── Choose Best Experiment       # Select best-performing model
-│   ├── Find SHAP values             # Compute SHAP values for interpretability
-│   └── Create Interaction Network   # Build gene interaction network
+│   │   ├── data/                # Dataset-specific data files
+│   │   ├── experiments/
+│   │   │   └── <experiment_name>/
+│   │   │       ├── model.pt              # PyTorch checkpoint  
+│   │   │       └── chosen_exp_components/  # Analysis outputs
+│   │   ├── preprocess.ipynb
+│   │   ├── train_model.py
+│   │   └── train_config.yaml
+│   ├── Bone Marrows
+│   │   └── data/                # Dataset-specific data files
+│   └── SERGIO
+│       └── data/                # Dataset-specific data files
+├── Inference                    # Model analysis notebooks
+│   ├── torch/                   # PyTorch notebooks (recommended)
+│   │   ├── torch_find_best_model.ipynb
+│   │   ├── torch_find_SHAP_values.ipynb
+│   │   └── torch_find_gene_networks.ipynb
+│   ├── tf/                      # TensorFlow notebooks (legacy)
+│   │   ├── tf_find_best_model.ipynb
+│   │   ├── tf_find_SHAP_values.ipynb
+│   │   └── tf_find_gene_networks.ipynb
+│   └── utils/                   # Shared utilities
+│       └── inference_utils.py
+```
 
 ## TODO
 - [] Add results for Bone Marrows and SERGIO
